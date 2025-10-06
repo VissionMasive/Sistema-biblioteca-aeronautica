@@ -1,0 +1,149 @@
+import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Box,
+  Heading,
+  Grid,
+  Input,
+  Select,
+  Image,
+  Text,
+  SimpleGrid,
+  Card,
+} from "@chakra-ui/react";
+import data from "./catalog.json";
+
+export default function Catalogo() {
+  const [q, setQ] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [tipo, setTipo] = useState("");
+  const [autor, setAutor] = useState("");
+  const [anio, setAnio] = useState("");
+  const [disp, setDisp] = useState("");
+
+  const categorias = useMemo(
+    () => Array.from(new Set(data.map((d) => d.categoria))).sort(),
+    []
+  );
+  const autores = useMemo(
+    () => Array.from(new Set(data.map((d) => d.autor))).sort(),
+    []
+  );
+  const anios = useMemo(
+    () => Array.from(new Set(data.map((d) => d.anio))).sort((a, b) => a - b),
+    []
+  );
+
+  const items = data.filter((d) => {
+    const okQ =
+      !q ||
+      d.titulo.toLowerCase().includes(q.toLowerCase()) ||
+      d.autor.toLowerCase().includes(q.toLowerCase());
+    const okC = !categoria || d.categoria === categoria;
+    const okT = !tipo || d.tipo === tipo;
+    const okA = !autor || d.autor === autor;
+    const okY = !anio || d.anio === Number(anio);
+    const okD = !disp || (disp === "SI" ? d.disponible : !d.disponible);
+    return okQ && okC && okT && okA && okY && okD;
+  });
+
+  return (
+    <Box>
+      <Heading as="h1" size="lg" mb={4}>
+        Bienvenido a tu biblioteca virtual
+      </Heading>
+
+      {/* Filtros */}
+      <Grid
+        bg="white"
+        rounded="md"
+        shadow="md"
+        p={4}
+        gap={2}
+        templateColumns={{ base: "1fr", md: "repeat(5, 1fr)" }}
+        mb={6}
+      >
+        <Input
+          placeholder="Buscar por título o autor"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          gridColumn={{ base: "span 1", md: "span 2" }}
+        />
+
+        <Select.Root value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+          <option value="">Categoría</option>
+          {categorias.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </Select.Root>
+
+        <Select.Root value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          <option value="">Tipo</option>
+          <option>LIBRO</option>
+          <option>PDF</option>
+        </Select.Root>
+
+        <Select.Root value={autor} onChange={(e) => setAutor(e.target.value)}>
+          <option value="">Autor</option>
+          {autores.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </Select.Root>
+
+        <Select.Root value={anio} onChange={(e) => setAnio(e.target.value)}>
+          <option value="">Año</option>
+          {anios.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </Select.Root>
+
+        <Select value={disp} onChange={(e) => setDisp(e.target.value)}>
+          <option value="">Disponible</option>
+          <option value="SI">Sí</option>
+          <option value="NO">No</option>
+        </Select>
+      </Grid>
+
+      {/* Resultados */}
+      <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} spacing={4}>
+        {items.map((x) => (
+          <Card.Root
+            as={Link}
+            to={`/libro/${x.id}`}
+            key={x.id}
+            shadow="md"
+            rounded="md"
+            _hover={{ shadow: "lg" }}
+          >
+            <Image
+              src={x.portada_url}
+              alt={`Portada ${x.titulo}`}
+              h="12rem"
+              w="full"
+              objectFit="cover"
+              roundedTop="md"
+            />
+            <Card.Body p={3}>
+              <Text fontWeight="medium" noOfLines={2}>
+                {x.titulo}
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                {x.autor} · {x.anio}
+              </Text>
+              <Text fontSize="xs" color="gray.500">
+                {x.categoria} · {x.tipo}{" "}
+                {x.disponible ? "· Disponible" : "· No disponible"}
+              </Text>
+            </Card.Body>
+          </Card.Root>
+        ))}
+      </SimpleGrid>
+    </Box>
+  );
+}
