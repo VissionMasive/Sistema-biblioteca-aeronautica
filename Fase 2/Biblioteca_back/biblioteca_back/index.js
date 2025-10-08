@@ -4,6 +4,8 @@ const app= express()
 const port = 3001
 const cors = require("cors")
 const booksrouter = require("./routes/books")
+const categoryRouter = require("./routes/category")
+
 app.use(cors())
 app.use(express.json())
 app.get("/",(req,res)=>{
@@ -14,3 +16,4 @@ app.listen(port,()=>{
 })
 app.use("/api/books",booksrouter)
 app.use("/api/auth",authRouter)
+app.use("/api/categories", categoryRouter)
