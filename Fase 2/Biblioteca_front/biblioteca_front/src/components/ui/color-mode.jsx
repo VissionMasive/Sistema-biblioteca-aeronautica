@@ -81,7 +81,7 @@ export const DarkMode = React.forwardRef(function DarkMode(props, ref) {
       color='fg'
       display='contents'
       className='chakra-theme dark'
-      colorPalette='gray'
+      colorPalette='white'
       colorScheme='dark'
       ref={ref}
       {...props}

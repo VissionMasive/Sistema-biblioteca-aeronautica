@@ -1,6 +1,7 @@
 import { Box, Flex, Link as ChakraLink, Image, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { FiUser, FiBookOpen, FiUsers, FiMessageSquare } from "react-icons/fi";
+import { ColorModeButton } from "./ui/color-mode";
 
 export function Navbar() {
   return (
@@ -24,7 +25,7 @@ export function Navbar() {
             fontSize={{ base: "lg", md: "xl" }}
             fontWeight="bold"
             textTransform="uppercase"
-            color="blue.500"
+            color="blue.700"
             letterSpacing="wide"
           >
             Biblioteca ETA
@@ -80,6 +81,7 @@ export function Navbar() {
           >
             <FiMessageSquare size={24} />
           </ChakraLink>
+          <ColorModeButton  />
         </Flex>
       </Flex>
     </Box>
