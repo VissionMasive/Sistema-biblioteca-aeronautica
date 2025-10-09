@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FiSearch } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import {
@@ -13,11 +13,13 @@ import {
   Image,
   HStack,
   Badge,
+  Button,
 } from "@chakra-ui/react";
 import { chakra } from "@chakra-ui/react";
 
 export default function Catalogo() {
   const [fileterByCategory, setFilterByCategory] = useState([]);
+  const [filterByTitle, setFilterByTitle] = useState("");
   const [categorias, setCategorias] = useState([]);
   const [filterItems] = useState([
     "categoria",
@@ -41,19 +43,64 @@ export default function Catalogo() {
       })
       .then((data) => setCategorias(data));
   }, []);
-  const categoryCollection = createListCollection({
-    items: categorias.map((cat) => ({
-      key: String(cat.id),
-      value: cat.nombre,
-      label: "categoria",
-      disabled: false,
-    })),
-  });
+  const categoryCollection = useMemo(() => {
+    return createListCollection({
+      items: categorias.map((cat) => ({
+        key: String(cat.id), // id único
+        value: String(cat.nombre), // value será el id (puedes cambiar a cat.nombre si prefieres)
+        label: cat.nombre, // texto visible
+        disabled: false,
+      })),
+    });
+  }, [categorias]);
 
-  const handleFilter = (value) => {
-    console.log(typeof(value))
-    setFilterByCategory(value)
-  }
+  const normalizeToKeys = (payload) => {
+    if (payload == null) return [];
+    if (payload && "value" in payload) {
+      const v = payload.value;
+      if (Array.isArray(v)) return v.map(String);
+      return [String(v)];
+    }
+    if (payload && "items" in payload && Array.isArray(payload.items)) {
+      return payload.items.map((it) =>
+        String(it.key ?? it.value ?? it.id ?? it)
+      );
+    }
+    if (Array.isArray(payload)) return payload.map(String);
+    if (payload instanceof Set) return Array.from(payload).map(String);
+    if (payload instanceof Map) return Array.from(payload.keys()).map(String);
+    if (typeof payload === "object") {
+      if ("id" in payload) return [String(payload.id)];
+      if (Array.isArray(payload.selectedKeys))
+        return payload.selectedKeys.map(String);
+      return Object.entries(payload)
+        .filter(([, v]) => Boolean(v))
+        .map(([k]) => String(k));
+    }
+    return [String(payload)];
+  };
+  const handleFilter = (e) => {
+    const keys = normalizeToKeys(e); // siempre string[]
+    setFilterByCategory(keys);
+  };
+
+  const handleFilterByTitle = (e) => {
+    fetch(`http://localhost:3001/api/books?nombre=${filterByTitle}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("error en la peticion");
+        return res.json();
+      })
+      .then((data) => setBooks(data));
+  };
+  useEffect(() => {
+    fetch(`http://localhost:3001/api/books?categoria=${fileterByCategory}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("error en la peticion");
+        return res.json();
+      })
+      .then((data) => setBooks(data));
+    console.log(books);
+  }, [fileterByCategory]);
 
   return (
     <Stack mt="1rem" mb="1rem">
@@ -73,45 +120,53 @@ export default function Catalogo() {
           borderRadius="sm"
           p="0.5rem"
           md={{ gridColumn: "span 2/ span 2" }}
-          endElement={<FiSearch />}
+          endElement={
+            <Button variant="plain"
+              onClick={handleFilterByTitle}
+            >
+              <FiSearch />
+            </Button>
+          }
         >
           <Input
             placeholder="Buscar libro por título, autor o ISBN"
             _placeholder={{ color: "gray.400" }}
             size={"sm"}
+            value={filterByTitle}
+            onChange={(e) => {
+              setFilterByTitle(e.currentTarget.value)} 
+            }
           />
         </InputGroup>
-        {filterItems.map((item) => (
-          <Select.Root
-            collection={categoryCollection}
-            borderRadius="sm"
-            p="0.5rem"
-            value={fileterByCategory}
-            onValueChange={(e) => handleFilter(e.value)}
-          >
-            <Select.HiddenSelect />
-            <Select.Control>
-              <Select.Trigger>
-                <Select.ValueText placeholder={item} />
-              </Select.Trigger>
-              <Select.IndicatorGroup>
-                <Select.Indicator />
-              </Select.IndicatorGroup>
-            </Select.Control>
-            <Portal>
-              <Select.Positioner>
-                <Select.Content>
-                  {categoryCollection.items.map((categoria) => (
-                    <Select.Item item={categoria} key={categoria.value}>
-                      {categoria.value}
-                      <Select.ItemIndicator />
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Portal>
-          </Select.Root>
-        ))}
+        <Select.Root
+          collection={categoryCollection}
+          borderRadius="sm"
+          p="0.5rem"
+          value={fileterByCategory.length ? fileterByCategory : []}
+          onValueChange={handleFilter}
+        >
+          <Select.HiddenSelect />
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText placeholder="Categoria" />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              <Select.Indicator />
+            </Select.IndicatorGroup>
+          </Select.Control>
+          <Portal>
+            <Select.Positioner>
+              <Select.Content>
+                {categoryCollection.items.map((categoria) => (
+                  <Select.Item item={categoria} key={categoria.id}>
+                    {categoria.value}
+                    <Select.ItemIndicator />
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Portal>
+        </Select.Root>
       </Box>
       <Box
         display="grid"
