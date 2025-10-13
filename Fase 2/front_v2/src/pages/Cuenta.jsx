@@ -1,25 +1,26 @@
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { Link } from "react-router-dom";
 
 export default function Cuenta() {
   const { loginUser } = useAuth();
   const [users, setUsers] = useState({
     email: "",
-    password: ""
-  })
+    password: "",
+  });
   const [show, setShow] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await loginUser(users)
-      console.log(data)
+      const data = await loginUser(users);
+      console.log(data);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
 
     alert("Inicio de sesión simulado. Luego lo conectamos con FastAPI.");
-  }
+  };
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
       <h1 className="text-2xl font-semibold mb-4">Iniciar sesión</h1>
@@ -33,7 +34,7 @@ export default function Cuenta() {
             className="border rounded w-full p-2"
             placeholder="usuario@alumnos.eta.cl"
             value={users.email}
-            onChange={(e) => setUsers({...users, email: e.target.value})}
+            onChange={(e) => setUsers({ ...users, email: e.target.value })}
             required
           />
         </div>
@@ -47,7 +48,7 @@ export default function Cuenta() {
               className="border rounded w-full p-2 pr-16"
               placeholder="••••••••"
               value={users.password}
-              onChange={(e) => setUsers({...users, password : e.target.value})}
+              onChange={(e) => setUsers({ ...users, password: e.target.value })}
               required
             />
             <button
@@ -64,7 +65,7 @@ export default function Cuenta() {
           Ingresar
         </button>
         <div className="text-xs text-slate-500 text-center">
-          ¿Olvidaste tu contraseña? Contacta a Soporte TI.
+          <Link to={"/registro"}>¿Eres nuevo usuario? Haz click aqui.</Link>
         </div>
       </form>
     </div>

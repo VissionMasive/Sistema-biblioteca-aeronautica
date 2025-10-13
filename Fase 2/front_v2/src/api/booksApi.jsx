@@ -7,17 +7,29 @@ export const getBooks = async () => {
 };
 
 export const getBookId = async (id) => {
-  const res = await fetch(API_URL);
+  const res = await fetch(`${API_URL}/${id}`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 };
 
+// Crear libro
 export const createBook = async (book) => {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(book),
   });
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+
+  // intenta leer el body por si la API devuelve mensaje de error
+  let body = null;
+  try { body = await res.json(); } catch (_) {}
+
+  if (!res.ok) {
+    const msg = body?.message || body?.error || `Error ${res.status}: ${res.statusText}`;
+    throw new Error(msg);
+  }
+
+  return body; // datos creados (o { ok:true })
 };
+
 

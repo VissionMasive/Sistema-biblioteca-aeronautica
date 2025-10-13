@@ -7,22 +7,24 @@ router.get("/", async (req, res, next) => {
   const { nombre, categoria, autor, anno, idioma, editorial } = req.query;
   try {
     const limit = parseInt(req.query.limit) || 100;
-    let query = `SELECT
-            l.id as libro_id,
-            l.nombre,
-            l.descripcion,
-            l.stock,
-            l.autor,
-            COALESCE(
-            json_agg(
-                json_build_object('id', c.id, 'nombre', c.nombre)
-            ) FILTER (WHERE c.id IS NOT NULL),
-             '[]'
+    let query = `
+      SELECT
+        l.id as libro_id,
+        l.nombre,
+        l.descripcion,
+        l.stock,
+        l.autor,
+        COALESCE(
+          json_agg(
+            json_build_object('id', c.id, 'nombre', c.nombre)
+          ) FILTER (WHERE c.id IS NOT NULL),
+          '[]'
         ) AS categorias
-        FROM public.libros l
-        LEFT JOIN public.libros_categorias lc ON l.id = lc.libro_id
-        LEFT JOIN public.categorias c ON lc.categoria_id = c.id
-        `;
+      FROM public.libros l
+      LEFT JOIN public.libros_categorias lc ON l.id = lc.libro_id
+      LEFT JOIN public.categorias c ON lc.categoria_id = c.id
+    `;
+
     const conditions = [];
     const values = [];
 
@@ -30,7 +32,7 @@ router.get("/", async (req, res, next) => {
       if (value && value.trim() !== "") {
         values.push(value.trim());
         conditions.push(
-          `($${values.length}::text IS NULL OR ${column} ILIKE ('%' || $${values.length}::text || '%'))`
+          `${column} ILIKE ('%' || $${values.length}::text || '%')`
         );
       }
     }
@@ -47,12 +49,8 @@ router.get("/", async (req, res, next) => {
     }
 
     query += " GROUP BY l.id ORDER BY l.id";
-
     values.push(limit);
-
     query += ` LIMIT $${values.length}`;
-
-    console.log(query, values);
 
     const { rows } = await db.query(query, values);
 
@@ -61,17 +59,20 @@ router.get("/", async (req, res, next) => {
     next(err);
   }
 });
+
 router.post("/", async (req, res, next) => {
   try {
+    const { nombre, descripcion } = req.body;
     const { rows } = await db.query(
-      "INSERT INTO public.libros (nombre, descripcion) values ($1,$2)",
-      [req.body.nombre, req.body.descripcion]
+      "INSERT INTO public.libros (nombre, descripcion) VALUES ($1, $2) RETURNING *",
+      [nombre, descripcion]
     );
-    res.status(201);
+    res.status(201).json(rows[0]);
   } catch (err) {
     next(err);
   }
 });
+
 router.post("/:libroid/prestar/:userid", async (req, res) => {
   const { libroid, userid } = req.params;
   try {
@@ -81,6 +82,7 @@ router.post("/:libroid/prestar/:userid", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 router.post("/:libroid/devolver/:userid", async (req, res) => {
   const { libroid, userid } = req.params;
   try {
@@ -90,4 +92,49 @@ router.post("/:libroid/devolver/:userid", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { rows } = await db.query(
+      `
+      SELECT
+        l.id as libro_id,
+        l.nombre,
+        l.descripcion,
+        l.stock,
+        l.autor,
+        l.anno,
+        l.idioma,
+        l.editorial,
+        COALESCE(
+          json_agg(
+            json_build_object('id', c.id, 'nombre', c.nombre)
+          ) FILTER (WHERE c.id IS NOT NULL),
+          '[]'
+        ) AS categorias
+      FROM public.libros l
+      LEFT JOIN public.libros_categorias lc ON l.id = lc.libro_id
+      LEFT JOIN public.categorias c ON lc.categoria_id = c.id
+      WHERE l.id = $1
+      GROUP BY l.id
+      `,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Libro no encontrado" });
+    }
+
+    const libro = { ...rows[0], id: rows[0].libro_id };
+    delete libro.libro_id;
+
+    res.json(libro);
+  } catch (err) {
+    console.error("Error al obtener libro:", err);
+    res.status(500).json({ message: "Error al obtener detalles del libro" });
+  }
+});
+
 module.exports = router;

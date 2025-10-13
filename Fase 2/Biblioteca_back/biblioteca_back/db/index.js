@@ -3,8 +3,8 @@ const connectionstring =
   "postgres://postgres:postgres@localhost:5432/biblioteca";
 const pool = new Pool({
   host: "localhost",
-  user: "Daniel",
-  password: "Daniel",
+  user: "Angelo",
+  password: "angelo",
   database: "biblioteca",
   port: 5432,
 });

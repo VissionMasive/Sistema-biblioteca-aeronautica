@@ -5,6 +5,7 @@ export function useBooks(initialFetch = true) {
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [book, setBook] = useState({})
 
   const fetchBooks = useCallback( async () => {
     setLoading(true)
@@ -34,9 +35,26 @@ export function useBooks(initialFetch = true) {
     }
   }, [])
 
+  const getBooksid = useCallback( async (id) => {
+
+  setLoading(true)
+    setError(null)
+    try {
+      const newBook = await api.getBookId(id)
+      setBook (newBook)
+      return newBook
+    } catch (err) {
+      setError(err.message || "Error al crear el libro")
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (initialFetch) fetchBooks()
   }, [fetchBooks, initialFetch])
 
-  return { books, loading, error, fetchBooks, addBook}
+
+  return { books, loading, error,book, fetchBooks, addBook, getBooksid}
 }

@@ -16,10 +16,11 @@ export default function Catalogo() {
 
   const [open, setOpen] = useState(false);
 
-  const anios = useMemo(
-    () => Array.from(new Set(data.map((d) => d.anio))).sort((a, b) => a - b),
+  const annos = useMemo(
+    () => Array.from(new Set(data.map((d) => d.anno))).sort((a, b) => a - b),
     []
   );
+console.log(books)
 
   const cleanFilters = () => {
     setFilters({});
@@ -77,7 +78,7 @@ export default function Catalogo() {
           />
           <Select
             label="año"
-            list={anios}
+            list={annos}
             onChange={(value) => handleFilter("anno", value)}
             valor={filters.anno || ""}
           />
@@ -101,8 +102,8 @@ export default function Catalogo() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {books.map((book) => (
             <Link
-              to={`/libro/${book.id}`}
-              key={book.id}
+              to={`/libro/${book.libro_id}`}
+              key={book.libro_id}
               className="bg-white rounded shadow hover:shadow-md transition p-3"
             >
               <img
